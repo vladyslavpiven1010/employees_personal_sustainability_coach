@@ -6,7 +6,7 @@ import { ERole } from '../jwt-auth.guard';
   * Entity interface that represents role.
 */
 
-@Entity('role')
+@Entity({schema: 'user_company', name: 'role'})
 export class Role {
   @PrimaryGeneratedColumn()
   id: number;

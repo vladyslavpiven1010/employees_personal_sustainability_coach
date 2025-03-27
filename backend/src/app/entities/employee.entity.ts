@@ -7,7 +7,7 @@ import { User } from './user.entity';
   * Entity interface that represents employee.
 */
 
-@Entity('employee')
+@Entity({ schema: 'user_company', name: 'employee' })
 @Unique(['user', 'company'])
 export class Employee {
   @PrimaryGeneratedColumn()

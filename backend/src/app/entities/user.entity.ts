@@ -6,7 +6,7 @@ import { Token } from './token.entity';
   * Entity interface that represents user.
 */
 
-@Entity('user')
+@Entity({schema: 'user_company', name: 'user'})
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
