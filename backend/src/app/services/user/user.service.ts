@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { User } from 'src/app/entities';
 import { DataSource } from 'typeorm';
-import { CreateUserDto, UpdateUserDto } from './dto';
+import { CreateUserDto, PublicUserInfoDto, UpdateUserDto } from './dto';
 
 @Injectable()
 export class UserService {
@@ -11,52 +11,56 @@ export class UserService {
     this.userRepository = this.dataSource.getRepository(User);
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<PublicUserInfoDto[]> {
     return await this.userRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect("employee.user_id", "user")
-      .leftJoinAndSelect("employee.company_id", "company")
-      .leftJoinAndSelect("employee.role_id", "role")
+      .leftJoinAndSelect('employee', 'employee', 'employee.user_id = user.id')
+      .leftJoinAndSelect('employee', 'company', 'employee.company_id = company.id')
+      .leftJoinAndSelect('employee', 'role', 'employee.role_id = role.id')
+      .select([
+        'user.name',
+        'user.email',
+        'user.created_at'
+      ])
       .getMany();
   }
 
   async findCompanyMembers(company_id: number): Promise<User[]> {
     return await this.userRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect("employee.user_id", "user")
-      .leftJoinAndSelect("employee.company_id", "company")
-      .leftJoinAndSelect("employee.role_id", "role")
+      .leftJoinAndSelect('employee', 'employee', 'employee.user_id = user.id')
+      .leftJoinAndSelect('employee', 'company', 'employee.company_id = company.id')
+      .leftJoinAndSelect('employee', 'role', 'employee.role_id = role.id')
       .where("employee.company_id = :company_id", { company_id: company_id })
       .getMany();
   }
 
-  async findFreeUsers(): Promise<User[]> {
-    return await this.userRepository
-      .createQueryBuilder('user')
-      .leftJoinAndSelect("employee.user_id", "user")
-      .leftJoinAndSelect("employee.company_id", "company")
-      .leftJoinAndSelect("employee.role_id", "role")
-      .where("employee.role_id = ")
-      .getMany();
-  }
+  // async findFreeUsers(): Promise<User[]> {
+  //   return await this.userRepository
+  //     .createQueryBuilder('user')
+  //     .leftJoinAndSelect('employee', 'employee', 'employee.user_id = user.id')
+  //     .leftJoinAndSelect('employee', 'company', 'employee.company_id = company.id')
+  //     .leftJoinAndSelect('employee', 'role', 'employee.role_id = role.id')
+  //     .where("employee.role_id = ")
+  //     .getMany();
+  // }
 
   async findOneById(id: number): Promise<User | null> {
     return await this.userRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect("employee.user_id", "user")
-      .leftJoinAndSelect("employee.company_id", "company")
-      .leftJoinAndSelect("employee.role_id", "role")
+      .leftJoinAndSelect('employee', 'employee', 'employee.user_id = user.id')
+      .leftJoinAndSelect('employee', 'company', 'employee.company_id = company.id')
+      .leftJoinAndSelect('employee', 'role', 'employee.role_id = role.id')
       .where("user.id = :id", { id: id })
       .getOne();
   }
 
   async findOneByEmail(email: string): Promise<User | null> {
+    console.log(email)
     return await this.userRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect("employee.user_id", "user")
-      .leftJoinAndSelect("employee.company_id", "company")
-      .leftJoinAndSelect("employee.role_id", "role")
-      .where("user.email = :email", { email: email })
+      
+      .where("user.email = :email", { email })
       .getOne();
   }
 
@@ -76,16 +80,20 @@ export class UserService {
     return this.userRepository.findOneBy({ id });
   }
 
-  async remove(id: number): Promise<void> {
-    await this.userRepository.softdelete(id);
+  async deleteUser(id: number): Promise<void> {
+    await this.userRepository.
+      createQueryBuilder()
+      .softDelete()
+      .where("id = :id", { id })
+      .execute();
   }
 
   async countCompanyMembers(companyId: number): Promise<number> {
     return await this.userRepository
       .createQueryBuilder('user')
-      .leftJoinAndSelect("employee.user_id", "user")
-      .leftJoinAndSelect("employee.company_id", "company")
-      .leftJoinAndSelect("employee.role_id", "role")
+      .leftJoinAndSelect('employee', 'employee', 'employee.user_id = user.id')
+      .leftJoinAndSelect('employee', 'company', 'employee.company_id = company.id')
+      .leftJoinAndSelect('employee', 'role', 'employee.role_id = role.id')
       .where("employee.company_id = :company_id", { company_id: companyId })
       .getCount();
   }

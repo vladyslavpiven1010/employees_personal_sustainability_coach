@@ -1,10 +1,11 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UserService } from '../user/user.service';
-import { RegisterUserDto } from './dto';
-import { User } from 'src/core/entities';
+import { User } from 'src/app/entities';
 import { TokenService } from '../token/token.service';
+import { RegisterUserDto } from './dto';
+import { ERole } from 'src/app/jwt-auth.guard';
 
 @Injectable()
 export class AuthService {
@@ -14,14 +15,12 @@ export class AuthService {
     private tokenService: TokenService
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string): Promise<User> {
     const user = await this.userService.findOneByEmail(email);
-    
-    if (user && await bcrypt.compare(password, user.password)) {
-      const { password, ...result } = user;
-      return result;
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException('Invalid credentials');
     }
-    return null;
+    return user;
   }
 
   async register(user: RegisterUserDto): Promise<User> {
@@ -34,7 +33,6 @@ export class AuthService {
 
     const newUser = await this.userService.create({
       name: user.name,
-      username: user.username,
       email: user.email,
       password: hashedPassword
     });
@@ -42,8 +40,8 @@ export class AuthService {
     return newUser;
   }
 
-  async login(user: User): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: user.id, email: user.email, role: user.role_id.name };
+  async login(user: User, companyId: number, role: ERole): Promise<{ accessToken: string; refreshToken: string }> {
+    const payload = { sub: user.id, companyId: companyId, role: role };
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
@@ -52,7 +50,7 @@ export class AuthService {
     return {accessToken, refreshToken};
   }
 
-  async refreshToken(oldAccessToken: string): Promise<string> {
+  async refreshToken(oldAccessToken: string, companyId: number, role: ERole): Promise<string> {
     const tokenEntity = await this.tokenService.findByAccessToken(oldAccessToken);
     if (!tokenEntity || !tokenEntity.is_valid) {
       throw new UnauthorizedException('Invalid refresh token');
@@ -62,7 +60,10 @@ export class AuthService {
       const payload = this.jwtService.verify(oldAccessToken, { secret: 'sdfsdf' });
       const user = await this.userService.findOneById(payload.sub);
 
-      const newAccessToken = this.jwtService.sign({ sub: user.id, email: user.email, role: user.role_id.name }, { expiresIn: '15m' });
+      if (!user) throw new UnauthorizedException('Invalid refresh token');
+
+      const newAccessToken = this.jwtService.sign({ sub: user.id, companyId: companyId, role: role }, { expiresIn: '15m' });
+      await this.tokenService.invalidateToken(oldAccessToken);
       return newAccessToken;
     } catch (err) {
       throw new UnauthorizedException('Invalid refresh token');
@@ -73,8 +74,8 @@ export class AuthService {
     await this.tokenService.invalidateToken(token);
   }
   
-  generateAccessToken(user: User) {
-    const payload = { sub: user.id, email: user.email, role: user.role_id.name };
+  generateAccessToken(userId: number, companyId: number, role: ERole) {
+    const payload = { sub: userId, companyId: companyId, role: role };
     return this.jwtService.sign(payload);
   }
 }

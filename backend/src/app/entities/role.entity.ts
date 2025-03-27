@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, DeleteDateColumn, JoinColumn } from 'typeorm';
 import { Employee } from './employee.entity';
+import { ERole } from '../jwt-auth.guard';
 
 /**
   * Entity interface that represents role.
@@ -11,7 +12,7 @@ export class Role {
   id: number;
 
   @Column({type: 'varchar', length: 255})
-  name: string;
+  name: ERole;
 
   @Column({type: 'text'})
   description: string;

@@ -1,42 +1,35 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AppModule } from './app/app.module';
-// import { 
-//   CategoryController,
-//   EventController,
-//   TicketController,
-//   UserController,
-//   CompanyController,
-//   AuthController,
-//   NotificationController
-// } from './controllers';
+import { 
+  UserController,
+  CompanyController,
+  AuthController,
+  EmployeeController
+} from './controllers';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Company, Role, User, Employee } from './app/entities';
+import { Company, Role, User, Employee, Token } from './app/entities';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
-      port: 5432,
+      host: '127.0.0.1',
+      port: 5434,
       username: 'postgres',
       password: '1111',
-      database: 'sustainable_coach_database',
-      entities: [User, Company, Role, Employee],
+      database: 'sustainable_coach',
+      entities: [User, Company, Role, Employee, Token],
       synchronize: true,
       autoLoadEntities: true
     }),
     AppModule, 
-    ConfigModule.forRoot({ isGlobal: true })
   ],
   controllers: [
-    // CategoryController, 
-    // EventController, 
-    // TicketController,
-    // UserController,
-    // CompanyController,
-    // AuthController,
-    // NotificationController
+    EmployeeController,
+    UserController,
+    CompanyController,
+    AuthController
   ],
   providers: [],
   exports: []

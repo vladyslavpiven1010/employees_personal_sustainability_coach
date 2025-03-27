@@ -36,15 +36,11 @@ export class CompanyService {
     return this.companyRepository.findOneBy({ id });
   }
 
-  // async kickOutAllUsers(company_id: number): Promise<void> {
-  //   const members: User[] = await this.userService.findCompanyMembers(company_id);
-
-  //   members.map(member => {
-  //     return this.kickOutUser(member.id);
-  //   })
-  // }
-
-  async remove(id: number): Promise<void> {
-    await this.companyRepository.delete(id);
+  async deleteCompany(id: number): Promise<void> {
+    await this.companyRepository
+    .createQueryBuilder()
+    .softDelete()
+    .where("id = :id", { id })
+    .execute();
   }
 }

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, CreateDateColumn, DeleteDateColumn, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, ManyToOne, JoinColumn, Unique } from 'typeorm';
 import { Role } from './role.entity';
 import { Company } from './company.entity';
 import { User } from './user.entity';
@@ -8,6 +8,7 @@ import { User } from './user.entity';
 */
 
 @Entity('employee')
+@Unique(['user', 'company'])
 export class Employee {
   @PrimaryGeneratedColumn()
   id: number;
